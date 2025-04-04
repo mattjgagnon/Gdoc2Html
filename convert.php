@@ -20,8 +20,16 @@ if ($plainTextContent === false) {
     exit(1);
 }
 
-// Simple processing example: wrap text in <pre> HTML tags
-$htmlContent = "<html><body><pre>" . htmlspecialchars($plainTextContent) . "</pre></body></html>";
+// Encode specific punctuation marks, excluding standard punctuation like commas and periods
+$search = ["'", "’", '"', "“", "”", "–", "—", "…"];
+$replace = ["&rsquo;", "&rsquo;", "&ldquo;", "&ldquo;", "&rdquo;", "&ndash;", "&mdash;", "&hellip;"];
+$processedContent = str_replace($search, $replace, htmlspecialchars($plainTextContent, ENT_NOQUOTES, 'UTF-8'));
+
+// Split into paragraphs by empty lines and wrap each paragraph in <p> tags without <br>
+$paragraphs = preg_split('/\r?\n\r?\n/', trim($processedContent));
+$htmlParagraphs = array_map(fn($para) => '<p>' . trim(preg_replace('/\r?\n/', ' ', $para)) . '</p>' . "\r\n", $paragraphs);
+
+$htmlContent = implode("\n", $htmlParagraphs);
 
 $outputFile = pathinfo($inputFilePath, PATHINFO_FILENAME) . ".html";
 file_put_contents($outputFile, $htmlContent);
